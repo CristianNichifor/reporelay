@@ -1,0 +1,33 @@
+services:
+  worker:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    environment:
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: "safe.directory"
+      GIT_CONFIG_VALUE_0: "*"
+    volumes:
+      - /home/cristianvn/Work/Dev/Repos/cnw-builder:/repos/cnw-builder:ro
+      - /home/cristianvn/Work/Dev/Repos/cnw-framework-ui:/repos/cnw-framework-ui:ro
+      - /home/cristianvn/Work/Dev/Repos/cnw-framework-web-hub:/repos/cnw-framework-web-hub:ro
+      - /home/cristianvn/Work/Dev/Repos/cnw-builderius-gutenberg-bridge:/repos/cnw-builderius-gutenberg-bridge:ro
+      - /home/cristianvn/Work/Dev/Repos/cnwebify-infrastructure:/repos/cnwebify-infrastructure:ro
+  web:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    environment:
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: "safe.directory"
+      GIT_CONFIG_VALUE_0: "*"
+    volumes:
+      - /home/cristianvn/Work/Dev/Repos/cnw-builder:/repos/cnw-builder:ro
+      - /home/cristianvn/Work/Dev/Repos/cnw-framework-ui:/repos/cnw-framework-ui:ro
+      - /home/cristianvn/Work/Dev/Repos/cnw-framework-web-hub:/repos/cnw-framework-web-hub:ro
+      - /home/cristianvn/Work/Dev/Repos/cnw-builderius-gutenberg-bridge:/repos/cnw-builderius-gutenberg-bridge:ro
+      - /home/cristianvn/Work/Dev/Repos/cnwebify-infrastructure:/repos/cnwebify-infrastructure:ro
+  mcp:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
