@@ -91,7 +91,7 @@
     "testcontainers": "^11.13.0",
     "tsup": "^8.5.1",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
+    "typescript": "^5.9.3",
     "vitepress": "^1.6.4",
     "vitepress-plugin-mermaid": "^2.0.17",
     "vitest": "^3.0.0",
@@ -99,7 +99,6 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild",
       "tree-sitter",
       "tree-sitter-c",
       "tree-sitter-cpp",

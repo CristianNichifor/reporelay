@@ -14,3 +14,5 @@ docs/.vitepress/cache
 
 .playwright-mcp
 *.tgz
+# graphify knowledge-graph output (regenerable via `graphify update .`)
+graphify-out/

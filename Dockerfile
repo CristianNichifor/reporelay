@@ -14,7 +14,7 @@ RUN pnpm install --frozen-lockfile
 # ── Prod deps: production-only node_modules (no devDependencies) ──
 FROM build-base AS prod-deps
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm config set onlyBuiltDependencies "tree-sitter tree-sitter-c tree-sitter-cpp tree-sitter-go tree-sitter-java tree-sitter-javascript tree-sitter-kotlin tree-sitter-python tree-sitter-rust tree-sitter-typescript" --location project && pnpm install --frozen-lockfile --prod
 
 # ── Build: compile TypeScript to JavaScript (excludes test files) ──
 FROM deps AS build
