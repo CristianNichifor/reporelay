@@ -16,9 +16,19 @@ import { resolveGitAuth } from "./git-credentials.js";
 function isolatedGit(baseDir?: string): ReturnType<typeof simpleGit> {
   const opts: Partial<SimpleGitOptions> = {
     config: ["credential.helper="],
+    // simple-git 3.36 blocks even clearing helpers. These exceptions allow the
+    // hard-coded empty settings; public operations reject option-like operands.
+    unsafe: { allowUnsafeCredentialHelper: true, allowUnsafeAskPass: true },
   };
   if (baseDir) opts.baseDir = baseDir;
   return simpleGit(opts).env({ GIT_TERMINAL_PROMPT: "0", GIT_ASKPASS: "" });
+}
+
+/** Prevent caller-controlled operands from becoming Git configuration or options. */
+function validateGitOperand(value: string, label: string): void {
+  if (!value || value.startsWith("-") || value.includes("\0")) {
+    throw new Error(`Invalid Git ${label}: expected a nonempty operand, not an option`);
+  }
 }
 
 /**
@@ -163,6 +173,7 @@ export async function syncMirror(
   mirrorsDir: string,
   repoName: string,
 ): Promise<string> {
+  validateGitOperand(sourcePathOrUrl, "repository source");
   const mirrorPath = join(mirrorsDir, `${repoName}.git`);
   const auth = resolveGitAuth(sourcePathOrUrl);
 
@@ -183,8 +194,9 @@ export async function syncMirror(
  * Resolve the commit SHA for a given ref (branch, tag, or HEAD) in a mirror.
  */
 export async function resolveCommitSha(mirrorPath: string, ref: string): Promise<string> {
+  validateGitOperand(ref, "ref");
   const git = isolatedGit(mirrorPath);
-  const result = await git.revparse([ref]);
+  const result = await git.revparse(["--verify", "--end-of-options", `${ref}^{commit}`]);
   return result.trim();
 }
 
@@ -203,6 +215,7 @@ export async function checkoutWorktree(
   commitSha: string,
   remoteUrl?: string,
 ): Promise<string> {
+  validateGitOperand(commitSha, "commit");
   const absWorktreesDir = resolve(worktreesDir);
   await mkdir(absWorktreesDir, { recursive: true });
   const worktreePath = join(absWorktreesDir, `wt-${randomUUID()}`);
@@ -237,6 +250,7 @@ export async function listFiles(
   commitSha: string,
   globPatterns: string[],
 ): Promise<string[]> {
+  validateGitOperand(commitSha, "commit");
   const git = isolatedGit(mirrorPath);
   const raw = await git.raw(["ls-tree", "-r", "--name-only", commitSha]);
   return raw
@@ -299,6 +313,7 @@ export async function readFileFromMirror(
   if (!(await exists(mirrorPath))) return null;
 
   try {
+    validateGitOperand(commitSha, "commit");
     return await withAuth(mirrorPath, remoteUrl, (git) => git.show([`${commitSha}:${filePath}`]));
   } catch {
     return null;

@@ -15,9 +15,11 @@ vi.mock("../storage/index.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../storage/index.js")>();
   return {
     ...actual,
-    RepoRepository: vi.fn().mockImplementation(() => ({
-      findByName: mockFindByName,
-    })),
+    RepoRepository: vi.fn().mockImplementation(function () {
+      return {
+        findByName: mockFindByName,
+      };
+    }),
   };
 });
 

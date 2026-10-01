@@ -20,19 +20,25 @@ vi.mock("../storage/index.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../storage/index.js")>();
   return {
     ...actual,
-    RepoRepository: vi.fn().mockImplementation(() => ({
-      findByName: mockFindByName,
-    })),
-    RepoRefRepository: vi.fn().mockImplementation(() => ({
-      findByRepoAndRef: mockFindByRepoAndRef,
-      insertOne: mockInsertOne,
-      updateWhere: mockUpdateWhere,
-      updateProgress: mockUpdateProgress,
-    })),
-    RefFileRepository: vi.fn().mockImplementation(() => ({
-      findByRepoRef: mockRefFileFindByRepoRef,
-      deleteForRepoRefAndInList: mockDeleteForRepoRefAndInList,
-    })),
+    RepoRepository: vi.fn().mockImplementation(function () {
+      return {
+        findByName: mockFindByName,
+      };
+    }),
+    RepoRefRepository: vi.fn().mockImplementation(function () {
+      return {
+        findByRepoAndRef: mockFindByRepoAndRef,
+        insertOne: mockInsertOne,
+        updateWhere: mockUpdateWhere,
+        updateProgress: mockUpdateProgress,
+      };
+    }),
+    RefFileRepository: vi.fn().mockImplementation(function () {
+      return {
+        findByRepoRef: mockRefFileFindByRepoRef,
+        deleteForRepoRefAndInList: mockDeleteForRepoRefAndInList,
+      };
+    }),
   };
 });
 
