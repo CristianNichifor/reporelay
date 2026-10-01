@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { mkdtemp, access, readFile } from "node:fs/promises";
+import { mkdtemp, access, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { simpleGit } from "simple-git";
@@ -214,17 +214,17 @@ describe("Git Sync", () => {
   });
 
   describe("syncMirror error handling", () => {
-    it("throws a friendly error for an unreachable remote URL", async () => {
+    it("throws a friendly error for a missing repository without network access", async () => {
       const tmpBase = await mkdtemp(join(tmpdir(), "reporelay-err-test-"));
       const errMirrorsDir = join(tmpBase, "mirrors");
 
-      await expect(
-        syncMirror(
-          "https://github.com/this-org-does-not-exist-reporelay-test/nope.git",
-          errMirrorsDir,
-          "bad-repo",
-        ),
-      ).rejects.toThrow(/Authentication required|Repository not found|Authentication failed/);
+      try {
+        await expect(
+          syncMirror(join(tmpBase, "missing.git"), errMirrorsDir, "bad-repo"),
+        ).rejects.toThrow(/Repository not found/);
+      } finally {
+        await rm(tmpBase, { recursive: true, force: true });
+      }
     });
   });
 });

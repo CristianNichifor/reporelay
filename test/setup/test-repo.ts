@@ -24,7 +24,10 @@ export async function createTestRepo(
 ): Promise<TestRepo> {
   const dir = await mkdtemp(join(tmpdir(), "reporelay-test-"));
   const git = simpleGit(dir);
-  await git.init();
+  await git.init(false, ["--initial-branch=main"]);
+  // Synthetic fixture commits must not depend on a developer signing agent.
+  await git.addConfig("commit.gpgsign", "false");
+  await git.addConfig("tag.gpgsign", "false");
   await git.addConfig("user.email", "test@reporelay.local");
   await git.addConfig("user.name", "reporelay Test");
 
