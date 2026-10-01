@@ -16,6 +16,9 @@ import { resolveGitAuth } from "./git-credentials.js";
 function isolatedGit(baseDir?: string): ReturnType<typeof simpleGit> {
   const opts: Partial<SimpleGitOptions> = {
     config: ["credential.helper="],
+    // simple-git 3.36 blocks even clearing helpers. Permit only the hard-coded
+    // empty helper and GIT_ASKPASS below; callers cannot supply config or env.
+    unsafe: { allowUnsafeCredentialHelper: true, allowUnsafeAskPass: true },
   };
   if (baseDir) opts.baseDir = baseDir;
   return simpleGit(opts).env({ GIT_TERMINAL_PROMPT: "0", GIT_ASKPASS: "" });

@@ -51,7 +51,7 @@ export abstract class BaseRepository<T extends TableWithId> {
    * Find all rows, optionally filtered by a WHERE clause.
    */
   async findAll(where?: SQL): Promise<T["$inferSelect"][]> {
-    const q = this.db.select().from(this.table);
+    const q = this.db.select().from(this.table as PgTable);
     if (where) {
       return (await q.where(where)) as T["$inferSelect"][];
     }
@@ -62,7 +62,11 @@ export abstract class BaseRepository<T extends TableWithId> {
    * Find the first matching row, or undefined.
    */
   async findOne(where: SQL): Promise<T["$inferSelect"] | undefined> {
-    const rows = await this.db.select().from(this.table).where(where).limit(1);
+    const rows = await this.db
+      .select()
+      .from(this.table as PgTable)
+      .where(where)
+      .limit(1);
     return rows[0] as T["$inferSelect"] | undefined;
   }
 
