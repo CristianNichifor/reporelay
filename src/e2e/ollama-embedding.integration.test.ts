@@ -17,7 +17,7 @@
  *   - `ollama serve` running locally with `nomic-embed-text` pulled
  *
  * Run:
- *   pnpm vitest run src/e2e/ollama-embedding.integration.test.ts
+ *   pnpm test:live
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { simpleGit } from "simple-git";
@@ -44,7 +44,7 @@ const EMBEDDING_MODEL = "nomic-embed-text";
 
 async function isOllamaAvailable(): Promise<boolean> {
   try {
-    const res = await fetch(`${OLLAMA_URL}/api/tags`);
+    const res = await fetch(`${OLLAMA_URL}/api/tags`, { signal: AbortSignal.timeout(5_000) });
     if (!res.ok) return false;
     const body = (await res.json()) as { models: { name: string }[] };
     return body.models.some((m) => m.name.startsWith(EMBEDDING_MODEL));
@@ -66,7 +66,6 @@ function cosine(a: number[], b: number[]): number {
 }
 
 describe("E2E: Repository indexing with Ollama embeddings (integration)", () => {
-  let ollamaAvailable: boolean;
   let db: Db;
   let embedder: OllamaEmbedder;
   let repo: TestRepo;
@@ -75,12 +74,10 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
   let commitSha: string;
 
   beforeAll(async () => {
-    ollamaAvailable = await isOllamaAvailable();
-    if (!ollamaAvailable) {
-      console.warn(
-        "⚠ Ollama not available or nomic-embed-text not pulled — skipping Ollama e2e tests",
+    if (!(await isOllamaAvailable())) {
+      throw new Error(
+        "Live checks require Ollama with nomic-embed-text; use test:integration for database-only checks.",
       );
-      return;
     }
 
     // 1. Start Postgres (testcontainers ParadeDB)
@@ -131,8 +128,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
 
   describe("storage: all indexed data persisted correctly", () => {
     it("indexes all supported language files into ref_files", async () => {
-      if (!ollamaAvailable) return;
-
       const rfRepo = new RefFileRepository(db);
       const refFileRows = await rfRepo.findByRepoRef(refRow.id);
       const paths = refFileRows.map((r) => r.path);
@@ -151,16 +146,12 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     });
 
     it("skips unsupported files (package.json, .png)", async () => {
-      if (!ollamaAvailable) return;
-
       const rfRepo = new RefFileRepository(db);
       expect(await rfRepo.findByRepoRefAndPath(refRow.id, "package.json")).toBeUndefined();
       expect(await rfRepo.findByRepoRefAndPath(refRow.id, "assets/logo.png")).toBeUndefined();
     });
 
     it("extracts symbols from TypeScript file", async () => {
-      if (!ollamaAvailable) return;
-
       const rfRepo = new RefFileRepository(db);
       const tsFile = await rfRepo.findByRepoRefAndPath(refRow.id, "src/service.ts");
       expect(tsFile).toBeDefined();
@@ -175,8 +166,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     });
 
     it("sets repo_ref status to 'ready'", async () => {
-      if (!ollamaAvailable) return;
-
       const refRepo = new RepoRefRepository(db);
       const ref = await refRepo.findById(refRow.id);
       expect(ref!.stage).toBe("ready");
@@ -184,8 +173,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     });
 
     it("all chunks have real (non-zero) embedding vectors of correct dimension", async () => {
-      if (!ollamaAvailable) return;
-
       const chunkRepo = new ChunkRepository(db);
       const allChunks = await chunkRepo.findAll();
 
@@ -209,8 +196,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
 
   describe("semantic search: real embeddings produce meaningful results", () => {
     it("hybrid search for 'service lifecycle start stop' returns TypeScript service file", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "service lifecycle start stop",
         repo: repo.name,
@@ -224,8 +209,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     });
 
     it("hybrid search for 'calculator math add multiply' returns Python calculator", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "calculator math add multiply",
         repo: repo.name,
@@ -238,8 +221,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     });
 
     it("hybrid search for 'HTTP server configuration' returns Go server file", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "HTTP server configuration",
         repo: repo.name,
@@ -252,8 +233,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     });
 
     it("hybrid search for 'memory safety traits error handling' returns Rust file", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "memory safety traits error handling",
         repo: repo.name,
@@ -266,8 +245,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     });
 
     it("semantic search ranks related code higher than unrelated code", async () => {
-      if (!ollamaAvailable) return;
-
       // Query specifically about Python data classes / calculation
       const results = await searchHybrid(db, embedder, {
         query: "dataclass result calculation history tracking",
@@ -290,8 +267,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     });
 
     it("search with no matches returns empty", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "quantum entanglement photon superposition",
         repo: "nonexistent-repo",
@@ -305,8 +280,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
 
   describe("vector quality: stored embeddings are semantically coherent", () => {
     it("chunks from the same file have higher mutual similarity than cross-file chunks", async () => {
-      if (!ollamaAvailable) return;
-
       const chunkRepo = new ChunkRepository(db);
       const rfRepo = new RefFileRepository(db);
 
@@ -343,8 +316,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     });
 
     it("query embedding is close to the most relevant stored chunk", async () => {
-      if (!ollamaAvailable) return;
-
       const chunkRepo = new ChunkRepository(db);
       const rfRepo = new RefFileRepository(db);
 
@@ -380,8 +351,6 @@ describe("E2E: Repository indexing with Ollama embeddings (integration)", () => 
     let newCommitSha: string;
 
     beforeAll(async () => {
-      if (!ollamaAvailable) return;
-
       // Add a second commit: modify TS file, delete Python file, add new file
       newCommitSha = await addCommitToTestRepo(
         repo.path,
@@ -437,16 +406,12 @@ export class AuthService {
     }, 120_000);
 
     it("v2.0.0 ref reaches status 'ready'", async () => {
-      if (!ollamaAvailable) return;
-
       const refRepo = new RepoRefRepository(db);
       const ref = await refRepo.findById(refRow2.id);
       expect(ref!.stage).toBe("ready");
     });
 
     it("new auth.ts file has chunks with real embeddings", async () => {
-      if (!ollamaAvailable) return;
-
       const rfRepo = new RefFileRepository(db);
       const authFile = await rfRepo.findByRepoRefAndPath(refRow2.id, "src/auth.ts");
       expect(authFile).toBeDefined();
@@ -463,16 +428,12 @@ export class AuthService {
     });
 
     it("deleted calculator.py is not in v2 ref_files", async () => {
-      if (!ollamaAvailable) return;
-
       const rfRepo = new RefFileRepository(db);
       const deleted = await rfRepo.findByRepoRefAndPath(refRow2.id, "src/calculator.py");
       expect(deleted).toBeUndefined();
     });
 
     it("search for 'authentication JWT token verify' finds new auth.ts in v2", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "authentication JWT token verify",
         repo: repo.name,
@@ -485,8 +446,6 @@ export class AuthService {
     });
 
     it("search for 'calculator' in v2 returns no Python results (deleted)", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "calculator add multiply",
         repo: repo.name,
@@ -498,8 +457,6 @@ export class AuthService {
     });
 
     it("v1.0.0 search still works independently of v2", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "calculator add multiply",
         repo: repo.name,
@@ -516,8 +473,6 @@ export class AuthService {
 
   describe("context builder: assembles context packs with real embeddings", () => {
     it("builds an 'explain' context pack with semantically relevant chunks", async () => {
-      if (!ollamaAvailable) return;
-
       const pack = await buildContextPack(db, embedder, {
         repo: repo.name,
         repoId: repoRow.id,
@@ -542,8 +497,6 @@ export class AuthService {
 
   describe("RRF fusion: BM25 and vector scores both contribute", () => {
     it("FTS-heavy query (exact symbol name) returns relevant results", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "EventEmitter",
         repo: repo.name,
@@ -557,8 +510,6 @@ export class AuthService {
     });
 
     it("semantic-heavy query (no exact keyword match) still returns results via vector", async () => {
-      if (!ollamaAvailable) return;
-
       // "compute arithmetic operations" doesn't appear verbatim but is semantically close to calculator.py
       const results = await searchHybrid(db, embedder, {
         query: "compute arithmetic operations on numbers",
@@ -573,8 +524,6 @@ export class AuthService {
     });
 
     it("all result fields are populated", async () => {
-      if (!ollamaAvailable) return;
-
       const results = await searchHybrid(db, embedder, {
         query: "server configuration",
         repo: repo.name,

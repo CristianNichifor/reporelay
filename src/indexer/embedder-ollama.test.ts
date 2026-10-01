@@ -2,7 +2,7 @@
  * Tests for OllamaEmbedder against a real Ollama instance.
  *
  * Requires: `ollama serve` running locally with `nomic-embed-text` pulled.
- * Run with: pnpm vitest run src/indexer/embedder-ollama.test.ts
+ * Run with: pnpm test:live
  */
 import { describe, it, expect, beforeAll } from "vitest";
 import { OllamaEmbedder, embedInBatches, createEmbedder } from "./embedder.js";
@@ -14,26 +14,25 @@ const OLLAMA_URL = "http://localhost:11434";
  */
 async function isOllamaAvailable(): Promise<boolean> {
   try {
-    const res = await fetch(`${OLLAMA_URL}/api/tags`);
-    return res.ok;
+    const res = await fetch(`${OLLAMA_URL}/api/tags`, { signal: AbortSignal.timeout(5_000) });
+    if (!res.ok) return false;
+    const body = (await res.json()) as { models: { name: string }[] };
+    return body.models.some((model) => model.name.split(":")[0] === "nomic-embed-text");
   } catch {
     return false;
   }
 }
 
 describe("OllamaEmbedder (live)", () => {
-  let available: boolean;
-
   beforeAll(async () => {
-    available = await isOllamaAvailable();
-    if (!available) {
-      console.warn("⚠ Ollama not available — skipping live embedding tests");
+    if (!(await isOllamaAvailable())) {
+      throw new Error(
+        "Live checks require Ollama with nomic-embed-text; run test:unit for offline checks.",
+      );
     }
   });
 
   it("embeds a single text and returns a vector of correct dimensions", async () => {
-    if (!available) return;
-
     const embedder = new OllamaEmbedder({
       url: OLLAMA_URL,
       model: "nomic-embed-text",
@@ -50,8 +49,6 @@ describe("OllamaEmbedder (live)", () => {
   });
 
   it("embeds multiple texts in a single call", async () => {
-    if (!available) return;
-
     const embedder = new OllamaEmbedder({
       url: OLLAMA_URL,
       model: "nomic-embed-text",
@@ -73,8 +70,6 @@ describe("OllamaEmbedder (live)", () => {
   });
 
   it("produces more similar embeddings for semantically related texts", async () => {
-    if (!available) return;
-
     const embedder = new OllamaEmbedder({
       url: OLLAMA_URL,
       model: "nomic-embed-text",
@@ -113,8 +108,6 @@ describe("OllamaEmbedder (live)", () => {
   });
 
   it("embedInBatches produces correct results with small batch size", async () => {
-    if (!available) return;
-
     const embedder = new OllamaEmbedder({
       url: OLLAMA_URL,
       model: "nomic-embed-text",
@@ -140,8 +133,6 @@ describe("OllamaEmbedder (live)", () => {
   });
 
   it("createEmbedder returns a working OllamaEmbedder", async () => {
-    if (!available) return;
-
     const embedder = createEmbedder({
       provider: "ollama",
       url: OLLAMA_URL,
@@ -157,8 +148,6 @@ describe("OllamaEmbedder (live)", () => {
   });
 
   it("throws on empty input", async () => {
-    if (!available) return;
-
     const embedder = new OllamaEmbedder({ url: OLLAMA_URL, model: "nomic-embed-text" });
     await expect(embedder.embed([])).rejects.toThrow("embed() requires at least one text");
   });
@@ -173,8 +162,6 @@ describe("OllamaEmbedder (live)", () => {
   });
 
   it("embeds real code snippets and produces distinct vectors", async () => {
-    if (!available) return;
-
     const embedder = new OllamaEmbedder({
       url: OLLAMA_URL,
       model: "nomic-embed-text",
@@ -221,8 +208,6 @@ func NewServer(addr string) *Server {
   });
 
   it("init() succeeds when model dimensions match DB schema", async () => {
-    if (!available) return;
-
     const embedder = new OllamaEmbedder({
       url: OLLAMA_URL,
       model: "nomic-embed-text",
