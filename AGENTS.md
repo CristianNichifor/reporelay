@@ -13,9 +13,10 @@ pnpm dev:web                # tsx watch src/web/main.ts — REST API on :3001
 pnpm dev:mcp                # tsx src/mcp/main.ts — MCP server (HTTP on :3000)
 pnpm dev:ui                 # Angular dashboard on :4200
 
-pnpm test                   # All tests (unit + integration)
+pnpm test                   # Unit + database integration; excludes live Ollama
 pnpm test:unit              # Unit tests only
 pnpm test:integration       # Integration tests (requires Docker for Testcontainers)
+pnpm test:live              # Explicit live Ollama + database checks
 pnpm test:watch             # Vitest watch mode
 ```
 
@@ -158,3 +159,15 @@ ui/            Angular 21 admin dashboard (see ui/DESIGN.md for UI design spec)
 - Integration tests use Testcontainers (ParadeDB) — Docker must be running.
 - Test helpers: `test/setup/postgres.ts` (DB container), `test/setup/test-repo.ts` (temp Git repos).
 - Fixtures: `test/fixtures/samples.ts` (multi-language sample code).
+
+## Fork contribution boundary
+
+Read CONTRIBUTING.md for frozen installation, upstream synchronization and the explicit live-test boundary. The fork CI requires build, unit tests and database integration tests. Ordinary agent verification never publishes packages or modifies a real indexed repository.
+
+## Contribution workflow
+
+- Work from the remote default branch in a separate checkout. With the maintainer's `wt` tool, run `git fetch origin` then `wt new chore/<task> origin/main`; it creates `<repo>/.worktrees/chore/<task>`. Contributors without `wt` can use a separate clone and feature branch. Never modify another task's working tree.
+- Use Conventional Commits: imperative lower-case subject, at most 72 characters, no trailing full stop, one change per commit. Explain why in the body only when needed; link issues with `Refs: #N` or `Closes: #N`.
+- Open a PR against `main` with the problem, resulting behavior, verification command/results and any limitations. Agents never merge PRs, push directly to protected branches, deploy, or publish releases.
+- A required check or administrator-only branch rule is not an agent permission boundary: administrator credentials can bypass rules. Keep publication credentials out of ordinary development.
+- Tasks need an observable acceptance criterion, affected area, constraints and a verification command. Use synthetic fixtures; do not include credentials or personal data in issues, logs or tests.

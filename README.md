@@ -25,6 +25,8 @@
 
 ---
 
+> This is an upstream-contribution fork. See [CONTRIBUTING.md](CONTRIBUTING.md) for local checks and the upstream contribution boundary.
+
 **RepoRelay** is a self-hosted code context engine for [MCP](https://modelcontextprotocol.io).
 
 1. [**Add repositories**](https://chwoerz.github.io/reporelay/guide/getting-started) from any source — GitHub, GitLab, Bitbucket, on-premise, or local disk
@@ -99,7 +101,7 @@ cd reporelay
 cp .env.example .env
 ```
 
-Edit `.env` if you need to change the embedding model or Git tokens for private repos. The defaults work out of the 
+Edit `.env` if you need to change the embedding model or Git tokens for private repos. The defaults work out of the
 box if you have [Ollama](https://ollama.com/) running locally with `nomic-embed-text` as a model.
 
 #### 2. Start everything
@@ -146,7 +148,9 @@ curl -sS 'http://localhost:3001/api/search?query=handleAuth'
 Or use the admin dashboard at `http://localhost` and the Swagger UI at `http://localhost:3001/docs`.
 
 #### 4. MCP Client
+
 Configure your MCP client (Claude Desktop, Cursor, etc.) to connect to the MCP proxy at `http://localhost:3000/mcp` — see the [MCP Client Setup](#mcp-client-setup) section below for details.
+
 </details>
 
 <details>
@@ -244,6 +248,7 @@ curl -sS http://localhost:3001/api/repos
 Or use the admin dashboard at `http://localhost:4200`.
 
 #### 6. MCP Client
+
 Configure your MCP client (Claude Desktop, Cursor, etc.) to connect to the MCP proxy at `http://localhost:3000/mcp` — see the [MCP Client Setup](#mcp-client-setup) section below for details.
 
 </details>
