@@ -8,7 +8,11 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["src/**/*.test.ts"],
-          exclude: ["src/**/*.integration.test.ts", "**/node_modules/**"],
+          exclude: [
+            "src/**/*.integration.test.ts",
+            "src/indexer/embedder-ollama.test.ts",
+            "**/node_modules/**",
+          ],
         },
       },
       {
@@ -16,7 +20,19 @@ export default defineConfig({
         test: {
           name: "integration",
           include: ["src/**/*.integration.test.ts"],
-          exclude: ["**/node_modules/**"],
+          exclude: ["src/e2e/ollama-embedding.integration.test.ts", "**/node_modules/**"],
+          testTimeout: 120_000,
+          hookTimeout: 120_000,
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "live",
+          include: [
+            "src/indexer/embedder-ollama.test.ts",
+            "src/e2e/ollama-embedding.integration.test.ts",
+          ],
           testTimeout: 120_000,
           hookTimeout: 120_000,
         },

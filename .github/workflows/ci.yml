@@ -1,0 +1,36 @@
+name: Fork checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  correctness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test:unit
+      - run: pnpm test:integration
+  verify:
+    if: ${{ always() }}
+    needs: [correctness]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful correctness checks
+        env:
+          RESULT: ${{ needs.correctness.result }}
+        run: test "$RESULT" = success

@@ -13,7 +13,9 @@ const MAX_RETRIES = 5;
  * the Postgres process and its host port binding are fully ready before returning.
  */
 async function tryStartContainer(): Promise<StartedTestContainer> {
-  return new GenericContainer("paradedb/paradedb:latest")
+  return new GenericContainer(
+    "paradedb/paradedb@sha256:a9cbdcfd8a1c349ab21590fd6d6dcbe7da489878df6502922d032dd64c1a7ae7",
+  )
     .withExposedPorts(5432)
     .withEnvironment({
       POSTGRES_DB: "reporelay_test",

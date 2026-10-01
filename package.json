@@ -16,7 +16,7 @@
     "dev:web": "tsx watch --env-file=.env src/web/main.ts",
     "dev:proxy": "tsx --env-file=.env src/mcp-proxy/main.ts",
     "dev:ui": "cd ui && npx ng serve",
-    "test": "vitest run",
+    "test": "vitest run --project unit --project integration",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:watch": "vitest",
@@ -27,7 +27,8 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:live": "vitest run --project live"
   },
   "keywords": [
     "mcp",
@@ -111,5 +112,9 @@
       "tree-sitter-rust",
       "tree-sitter-typescript"
     ]
+  },
+  "packageManager": "pnpm@10.6.5",
+  "engines": {
+    "node": ">=22.12.0"
   }
 }
