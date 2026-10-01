@@ -70,7 +70,7 @@ export function resolveGitAuth(
   }
 
   // Only HTTPS URLs get token injection (SSH uses keys, not tokens)
-  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+  if (parsed.protocol !== "https:") {
     return null;
   }
 

@@ -38,4 +38,6 @@ The `--server` CLI argument takes priority over `REPORELAY_URL`.
 
 ## Git Credentials
 
+Environment tokens are injected only into HTTPS remotes. HTTP remotes never receive `GIT_TOKEN_*` credentials; configure HTTPS on private Git hosts before using token authentication.
+
 See [Getting Started > Private Repositories](/guide/getting-started#private-repositories-https) for details on configuring HTTPS tokens.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalizeHost, resolveGitAuth } from "./git-credentials.js";
+import { hasTokenConfigured, normalizeHost, resolveGitAuth } from "./git-credentials.js";
 
 describe("normalizeHost", () => {
   it("replaces dots with underscores and uppercases", () => {
@@ -141,12 +141,20 @@ describe("resolveGitAuth", () => {
     expect(auth!.authenticatedUrl).toContain("?ref=main");
   });
 
-  it("works with http:// URLs (not just https://)", () => {
+  it("does not inject tokens into plaintext HTTP remotes", () => {
     const env = { GIT_TOKEN_INTERNAL_GIT_COM: "tok" };
     const auth = resolveGitAuth("http://internal-git.com/repo.git", env);
 
-    expect(auth).not.toBeNull();
-    expect(auth!.authenticatedUrl).toMatch(/^http:\/\/oauth2:tok@internal-git\.com/);
+    expect(auth).toBeNull();
+  });
+
+  it("does not offer a configured GitHub token over HTTP", () => {
+    const env = { GIT_TOKEN_GITHUB_COM: "synthetic-token" };
+    const remote = "http://github.com/org/repo.git";
+
+    expect(resolveGitAuth(remote, env)).toBeNull();
+    expect(hasTokenConfigured(remote, env)).toBe(false);
+    expect(hasTokenConfigured("https://github.com/org/repo.git", env)).toBe(true);
   });
 
   it("percent-encodes special characters in tokens", () => {
